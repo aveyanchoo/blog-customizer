@@ -1,4 +1,3 @@
-import clsx from 'clsx';
 import styles from './ArticleParamsForm.module.scss';
 import { ArrowButton } from 'src/ui/arrow-button';
 import { Button } from 'src/ui/button';
@@ -16,7 +15,7 @@ import {
 	contentWidthArr,
 } from 'src/constants/articleProps';
 
-import { useState, FormEvent } from 'react';
+import { useState, useRef, useEffect, FormEvent } from 'react';
 
 type ArticleParamsFormProps = {
 	initialState: ArticleStateType;
@@ -27,7 +26,7 @@ export const ArticleParamsForm = ({
 	initialState,
 	onApply,
 }: ArticleParamsFormProps) => {
-	const [isOpen, setIsOpen] = useState(false);
+	const [isMenuOpen, setIsMenuOpen] = useState(false);
 	const [fontFamily, setFontFamily] = useState<OptionType>(
 		initialState.fontFamilyOption
 	);
@@ -67,16 +66,38 @@ export const ArticleParamsForm = ({
 		onApply(defaultArticleState);
 	};
 
+	const sidebarRef = useRef<HTMLElement>(null);
+
+	useEffect(() => {
+		const handleClickOutside = (e: MouseEvent) => {
+			if (
+				sidebarRef.current &&
+				!sidebarRef.current.contains(e.target as Node)
+			) {
+				setIsMenuOpen(false);
+			}
+		};
+
+		if (isMenuOpen) {
+			document.addEventListener('mousedown', handleClickOutside);
+		}
+
+		return () => {
+			document.removeEventListener('mousedown', handleClickOutside);
+		};
+	}, [isMenuOpen]);
+
 	return (
 		<>
-			<ArrowButton isOpen={isOpen} onClick={() => setIsOpen((prev) => !prev)} />
-
-			{isOpen && (
-				<div className={styles.overlay} onClick={() => setIsOpen(false)} />
-			)}
-
+			<ArrowButton
+				isOpen={isMenuOpen}
+				onClick={() => setIsMenuOpen((prev) => !prev)}
+			/>
 			<aside
-				className={clsx(styles.container, isOpen && styles.container_open)}>
+				ref={sidebarRef}
+				className={`${styles.container} ${
+					isMenuOpen ? styles.container_open : ''
+				}`}>
 				<form className={styles.form} onSubmit={handleSubmit}>
 					<Select
 						selected={fontFamily}
